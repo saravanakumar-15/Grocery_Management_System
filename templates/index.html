@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>🛒 Grocery Manager</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ── SIDEBAR ───────────────────────────────────────────────── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">🛒</span>
+    <div>
+      <div class="logo-title">PantryOS</div>
+      <div class="logo-sub">Grocery Manager</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <a href="#" class="nav-item active" data-filter="all">
+      <span>📦</span> All Items
+      <span class="nav-count" id="nav-total">{{ stats.total }}</span>
+    </a>
+    <a href="#" class="nav-item danger" data-filter="expired">
+      <span>⛔</span> Expired
+      <span class="nav-count red" id="nav-expired">{{ stats.expired }}</span>
+    </a>
+    <a href="#" class="nav-item warn" data-filter="today">
+      <span>⏰</span> Expires Today
+      <span class="nav-count orange" id="nav-today">{{ stats.today }}</span>
+    </a>
+    <a href="#" class="nav-item warn" data-filter="critical">
+      <span>⚡</span> Within 3 Days
+      <span class="nav-count yellow" id="nav-critical">{{ stats.critical }}</span>
+    </a>
+    <a href="#" class="nav-item" data-filter="good">
+      <span>✅</span> Good
+      <span class="nav-count green" id="nav-good">{{ stats.good }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-cats">
+    <div class="sidebar-cats-label">CATEGORIES</div>
+    {% for cat, meta in [
+      ('Dairy','🥛'),('Produce','🥦'),('Meat','🥩'),('Bakery','🍞'),
+      ('Frozen','🧊'),('Pantry','🫙'),('Beverages','🧃'),('Fruits','🍎'),
+      ('Vegetables','🥕'),('Snacks','🍿'),('Other','📦')
+    ] %}
+    <a href="#" class="cat-item" data-cat="{{ cat }}">{{ meta }} {{ cat }}</a>
+    {% endfor %}
+  </div>
+</aside>
+
+<!-- ── MAIN ───────────────────────────────────────────────────── -->
+<main class="main">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="Search items..." />
+      </div>
+    </div>
+    <div class="topbar-right">
+      <select id="sortSelect" class="sort-select">
+        <option value="expiry">Sort: Expiry</option>
+        <option value="name">Sort: Name</option>
+        <option value="category">Sort: Category</option>
+      </select>
+      <button class="btn-clear" id="clearExpiredBtn">🗑 Clear Expired</button>
+      <button class="btn-add" id="openAddModal">+ Add Item</button>
+    </div>
+  </header>
+
+  <!-- Alert Banner -->
+  {% if stats.expired > 0 or stats.today > 0 %}
+  <div class="alert-banner" id="alertBanner">
+    <span>⚠️</span>
+    <span>
+      {% if stats.expired > 0 %}<strong>{{ stats.expired }} item(s) expired.</strong> {% endif %}
+      {% if stats.today > 0 %}<strong>{{ stats.today }} item(s) expire today.</strong>{% endif %}
+      Take action now.
+    </span>
+    <button onclick="document.getElementById('alertBanner').remove()">✕</button>
+  </div>
+  {% endif %}
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">📦</div>
+      <div class="stat-val" id="s-total">{{ stats.total }}</div>
+      <div class="stat-label">Total Items</div>
+    </div>
+    <div class="stat-card pulse-red">
+      <div class="stat-icon">⛔</div>
+      <div class="stat-val red" id="s-expired">{{ stats.expired }}</div>
+      <div class="stat-label">Expired</div>
+    </div>
+    <div class="stat-card pulse-orange">
+      <div class="stat-icon">⏰</div>
+      <div class="stat-val orange" id="s-today">{{ stats.today }}</div>
+      <div class="stat-label">Expires Today</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">⚡</div>
+      <div class="stat-val yellow" id="s-critical">{{ stats.critical }}</div>
+      <div class="stat-label">Within 3 Days</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✅</div>
+      <div class="stat-val green" id="s-good">{{ stats.good }}</div>
+      <div class="stat-label">Good</div>
+    </div>
+  </div>
+
+  <!-- Item Grid -->
+  <div class="grid-label">
+    <span id="gridTitle">All Items</span>
+    <span class="grid-count" id="gridCount">{{ items|length }} items</span>
+  </div>
+
+  <div class="item-grid" id="itemGrid">
+    {% for item in items %}
+    <div class="item-card {{ item.status.tier }}" data-id="{{ item.id }}"
+         data-tier="{{ item.status.tier }}" data-cat="{{ item.category }}"
+         data-name="{{ item.name|lower }}" data-expiry="{{ item.expiry_date or '' }}">
+      <div class="card-img-wrap">
+        <img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy"
+             onerror="this.src='https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80'"/>
+        <span class="card-emoji">{{ item.emoji }}</span>
+        <span class="card-badge {{ item.status.badge }}">{{ item.status.label }}</span>
+      </div>
+      <div class="card-body">
+        <div class="card-name">{{ item.name }}</div>
+        <div class="card-meta">
+          <span class="card-cat">{{ item.emoji }} {{ item.category }}</span>
+          <span class="card-qty">{{ item.quantity }} {{ item.unit }}</span>
+        </div>
+        <div class="card-expiry">
+          📅 {% if item.expiry_date %}{{ item.expiry_date }}{% else %}No date set{% endif %}
+        </div>
+        <div class="card-actions">
+          <button class="btn-edit" onclick="openEdit('{{ item.id }}')">✎ Edit</button>
+          <button class="btn-del" onclick="deleteItem('{{ item.id }}', '{{ item.name }}')">✕</button>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+
+    <div class="empty-state" id="emptyState" style="display:none">
+      <div style="font-size:48px">🥦</div>
+      <div>No items found</div>
+    </div>
+  </div>
+</main>
+
+<!-- ── ADD / EDIT MODAL ───────────────────────────────────────── -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add New Item</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="editId" value="">
+
+      <div class="form-preview" id="formPreview">
+        <img id="previewImg" src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=200&q=80" alt="preview"/>
+        <div class="preview-info">
+          <div id="previewName" class="preview-name">Item Name</div>
+          <div id="previewCat"  class="preview-cat">Category</div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Item Name *</label>
+          <input type="text" id="fName" placeholder="e.g. Whole Milk" oninput="updatePreview()"/>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="fCat" onchange="updatePreview()">
+            {% for cat in categories %}
+            <option>{{ cat }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Quantity *</label>
+          <input type="number" id="fQty" placeholder="1" min="0" step="0.1"/>
+        </div>
+        <div class="form-group">
+          <label>Unit</label>
+          <input type="text" id="fUnit" placeholder="kg / L / pcs"/>
+        </div>
+        <div class="form-group">
+          <label>Expiry Date</label>
+          <input type="date" id="fExpiry"/>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn-save" id="saveBtn" onclick="saveItem()">Add Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ─────────────────────────────────────────────────── -->
+<div class="toast" id="toast"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

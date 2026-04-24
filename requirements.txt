@@ -1,0 +1,59 @@
+# 🛒 Grocery Management System
+
+A full-stack web app with expiry tracking, item images, and CRUD operations.
+
+## Stack
+- **Backend**: Python + Flask
+- **Database**: SQLite (auto-created on first run)
+- **Frontend**: HTML + CSS + Vanilla JS
+
+## Project Structure
+```
+grocery_app/
+├── app.py                  ← Flask backend + expiry logic + REST API
+├── requirements.txt
+├── grocery.db              ← SQLite DB (auto-generated)
+├── templates/
+│   └── index.html          ← Main HTML page
+└── static/
+    ├── css/style.css       ← All styles
+    └── js/app.js           ← Frontend logic + filtering + API calls
+```
+
+## Setup & Run
+
+### 1. Install dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Run the app
+```bash
+python app.py
+```
+
+### 3. Open in browser
+```
+http://localhost:5000
+```
+
+## Features
+- ✅ Add / Edit / Delete grocery items
+- 🖼️ Auto item images based on name + category (Unsplash)
+- ⚠️ Expiry tiers: Expired / Today / Critical (3d) / Soon (7d) / Good
+- 🔔 Alert banner on startup for expired/today items
+- 🗑️ Bulk clear expired items
+- 🔍 Search by name or category
+- 📂 Filter by expiry status or category (sidebar)
+- 📊 Live stats dashboard
+- 💾 SQLite persistence
+
+## REST API Endpoints
+| Method | Endpoint                  | Action           |
+|--------|---------------------------|------------------|
+| GET    | /api/items                | Get all items    |
+| POST   | /api/items                | Add item         |
+| PUT    | /api/items/<id>           | Update item      |
+| DELETE | /api/items/<id>           | Delete item      |
+| DELETE | /api/items/clear-expired  | Remove all expired |
+| GET    | /api/stats                | Get stats        |
